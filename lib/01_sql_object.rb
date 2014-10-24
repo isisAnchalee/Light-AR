@@ -10,7 +10,7 @@ class SQLObject
     SQL
 
     #first result in query returns array of string table names
-    tables = DBConnection.execute2(query)
+    tables = DBConnection.execute(query)
     @columns = tables.first.map(&:to_sym)
     p @columns
     #must convert them to symbols to store our object values
@@ -118,7 +118,6 @@ class SQLObject
       SQL
 
       self.id = DBConnection.last_insert_row_id
-
   end
 
   def update
