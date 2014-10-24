@@ -1,7 +1,6 @@
 require_relative 'db_connection'
 require 'active_support/inflector'
 
- # bundle exec rspec spec/01_sql_object_spec.rb
 class SQLObject
   def self.columns
 
@@ -13,6 +12,7 @@ class SQLObject
     #first result in query returns array of string table names
     tables = DBConnection.execute2(query)
     @columns = tables.first.map(&:to_sym)
+    p @columns
     #must convert them to symbols to store our object values
   end
 
@@ -49,9 +49,10 @@ class SQLObject
       FROM "#{table_name}"
     SQL
 
-    #returns an array of all raw hash objects containing the table row data
-    results = DBConnection.execute(query)
+    #returns an array of all raw hash objs containing the table row data
     #parse_all converts raw hash rable row into a new instance of the object
+    
+    results = DBConnection.execute(query)
     parse_all(results)
 
   end
@@ -74,20 +75,20 @@ class SQLObject
     #returns all queried values in an array
     #even if it searched for just one object
     #we must access it from the array
+
     parse_all(result).first
   end
 
   def initialize(params = {})
     params.each do |attr_name, value|
-      #iterate through params hash setting each key to a symbol
       attr_name = attr_name.to_sym
       if self.class.columns.include?(attr_name)
         #check if the class columns contains the attr_name
-        self.send("#{ attr_name }=", value)
         #use send to call the attribute setter to value passed in
+        self.send("#{ attr_name }=", value)
       else
         raise "unknown attribute '#{attr_name}'"
-        #there is no column in the table for the attribute
+        #there is no column in the table for the given attribute
       end
     end
   end
@@ -96,20 +97,50 @@ class SQLObject
     @attributes ||= {}
   end
 
+  #this is an instance method so we must call self.class.columns to access columns
+
   def attribute_values
-    # ...
+    self.class.columns.map { |attr| self.send(attr) }
   end
 
   def insert
-    col_names = self.columns
-    question_marks = ["?"] * col_names.length
+    col_names = self.class.columns.map(&:to_s).join(", ")
+    question_marks = (["?"] * self.class.columns.length).join(", ")
+
+    #stringify column names and join them with commas
+    #create a question mark for each column value join to string with commas
+
+    DBConnection.execute(<<-SQL, *attribute_values)
+        INSERT INTO
+          #{ self.class.table_name } (#{ col_names })
+        VALUES
+          (#{ question_marks })
+      SQL
+
+      self.id = DBConnection.last_insert_row_id
+
   end
 
   def update
-    # ...
-  end
+
+    #generate "col3 = ?, col2 = ?," format
+    #pass in magic attribute_values as well as ID
+
+   format_attrs = self.class.columns
+        .map { |attr| "#{ attr } = ?" }.join(", ")
+
+      DBConnection.execute(<<-SQL, *attribute_values, id)
+        UPDATE
+          #{ self.class.table_name }
+        SET
+          #{ format_attrs }
+        WHERE
+          #{ self.class.table_name }.id = ?
+      SQL
+    end
 
   def save
-    # ...
+    id.nil? ? insert : update
   end
+
 end
