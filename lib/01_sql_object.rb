@@ -12,7 +12,6 @@ class SQLObject
     #first result in query returns array of string table names
     tables = DBConnection.execute(query)
     @columns = tables.first.map(&:to_sym)
-    p @columns
     #must convert them to symbols to store our object values
   end
 
