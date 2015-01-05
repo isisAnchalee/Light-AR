@@ -2,20 +2,20 @@
 
 Ruby metaprogramming to simulate various functionality of Active Record.
 
-#Phase 0:
+##Phase 0:
 AttrAccessorObject
 
-#Phase I: 
+##Phase I: 
 SQLObject
 
-#Phase II: 
+##Phase II: 
 Module Searchable
 
-#Phase III: 
+##Phase III: 
 AssocOptions - Belongs To/ Has Many
 
-#Phase IV: 
+##Phase IV: 
 Module Associatable - Has Many Through 
 
-#Phase V: 
+##Phase V: 
 DBConnection
